@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سار بليل وحيدا</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #1c1717; /* Deep, somber background */
+            color: #f8fafc; /* Lighter text for contrast */
+            overflow-y: auto; /* Allow scrolling for lyrics */
+            display: flex;
+            flex-direction: column; /* Arrange children vertically */
+            justify-content: flex-start; /* Align items to the top */
+            align-items: center; /* Center items horizontally */
+            min-height: 100vh;
+            padding-top: 50px; /* Add padding at the top */
+            padding-bottom: 100px; /* Add padding at the bottom for the audio player and footer */
+            cursor: none; /* Hide default cursor for the entire body */
+        }
+        #app-container {
+            position: relative;
+            width: 95%; /* Use more width */
+            max-width: 800px; /* Max width for readability */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center items horizontally */
+            text-align: center; /* Center text within the container */
+            padding: 20px;
+            /* Slightly transparent darker background for the container */
+            background-color: rgba(28, 23, 23, 0.8); /* Make container background a bit more opaque */
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Add a subtle shadow */
+            color: #f8fafc; /* Ensure text inside container is light */
+            z-index: 1; /* Ensure container is above the background */
+            margin-bottom: 30px; /* Add space below the main container */
+        }
+        #moon {
+            position: absolute;
+            top: 20px; /* Adjust position */
+            right: 20px; /* Adjust position */
+            font-size: 3rem; /* Slightly smaller moon */
+            color: #bfdbfe; /* Bluish moon color */
+            z-index: 5; /* Ensure moon is behind other elements */
+        }
+        #stars {
+            position: fixed; /* Fixed position for background */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0; /* Send stars to the background */
+        }
+        .star {
+            position: absolute;
+            font-size: 0.7rem; /* Smaller stars */
+            color: #e0f2f7; /* Bluish white stars */
+            opacity: 0.5;
+            animation: twinkle linear infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        #message-box {
+           display: none; /* Hide the old message box */
+        }
+        #lyrics {
+            display: block; /* Display lyrics by default now */
+            margin-top: 20px;
+            font-size: 1.2rem;
+            line-height: 1.8; /* Increase line spacing */
+            text-align: center; /* Center the text */
+            opacity: 1; /* Make lyrics visible by default */
+            transition: opacity 1s ease-in-out; /* Keep fade in effect for initial load */
+            width: 100%; /* Make lyrics take full width of container */
+        }
+        #lyrics p {
+            margin-bottom: 1em; /* Space between paragraphs */
+            padding: 5px 10px; /* Add some padding for the highlight effect */
+            transition: all 0.3s ease; /* Smooth transition for hover effects */
+            display: inline-block; /* Allow padding and background on hover */
+            /* Removed cursor: none; - handled by body */
+        }
+
+        /* Hover effect for lyrics paragraphs */
+        #lyrics p:hover {
+            transform: translateY(-5px); /* Pop up slightly */
+            color: #f5f5dc; /* Change text color to beige */
+            background-color: rgba(245, 245, 220, 0.1); /* Very light beige highlight */
+            border-radius: 5px; /* Optional: add rounded corners to highlight */
+        }
+
+         audio {
+            display: block; /* Make the audio player visible */
+            margin-top: 30px; /* Add space above the player */
+            width: 100%; /* Make player take full width of container */
+            max-width: 500px; /* Limit max width */
+            filter: invert(1) grayscale(1) sepia(1); /* Optional: style the player */
+            /* You might need browser-specific prefixes for filter */
+        }
+
+        /* Style for the buttons container */
+        #top-left-buttons {
+            position: fixed; /* Fixed position */
+            top: 20px; /* 20px from the top edge */
+            left: 20px; /* 20px from the left edge */
+            display: flex; /* Use flexbox to arrange buttons */
+            gap: 10px; /* Space between buttons */
+            z-index: 100; /* Ensure it's above other content */
+        }
+
+        /* Style for the buttons */
+        .top-left-button {
+            background-color: #4a5568; /* Dark gray button */
+            color: #f8fafc; /* Changed emoji color to match website text */
+            width: 40px; /* Fixed width */
+            height: 40px; /* Fixed height */
+            padding: 0; /* Remove padding */
+            border: none;
+            border-radius: 50%; /* Make it circular */
+            cursor: pointer; /* Keep pointer cursor for the button */
+            font-size: 1.5rem; /* Larger font size for emoji */
+            display: flex; /* Use flexbox to center emoji */
+            justify-content: center; /* Center emoji horizontally */
+            align-items: center; /* Center emoji vertically */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease;
+        }
+
+        .top-left-button:hover {
+            background-color: #2d3748; /* Darker on hover */
+        }
+
+
+        /* Style for the new section */
+        .overlay-section {
+            position: fixed; /* Fixed position */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9); /* Semi-transparent black overlay */
+            color: white;
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 200; /* Ensure it's above everything else */
+            padding: 20px;
+            overflow-y: auto; /* Allow scrolling if content is long */
+        }
+
+        .overlay-content {
+            max-width: 600px;
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.05); /* Very subtle light background */
+            border-radius: 8px;
+        }
+
+        /* Style for paragraphs within the new section content */
+        .overlay-content p {
+            margin-bottom: 1.5em; /* More space between paragraphs */
+            line-height: 1.6; /* Slightly less line height for summary */
+            text-align: center; /* Changed text-align to center */
+            font-family: 'Amiri', serif; /* Use Amiri font for summary */
+            font-size: 1.1rem; /* Slightly smaller font size */
+        }
+
+        .close-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #e53e3e; /* Red close button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer; /* Keep pointer cursor for the close button */
+            font-size: 1.2rem;
+        }
+
+        /* Style for the new 'install' button/link */
+        #install-button {
+            display: inline-block; /* Make it behave like a button */
+            margin-top: 20px; /* Add space above the button */
+            background-color: #48bb78; /* Greenish color */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none; /* Remove underline from link */
+            font-size: 1.1rem;
+            transition: background-color 0.3s ease;
+             cursor: pointer; /* Keep pointer cursor for the install button */
+        }
+
+        #install-button:hover {
+            background-color: #38a169; /* Darker green on hover */
+        }
+
+        /* Custom Cursor Style */
+        #custom-cursor {
+            position: fixed;
+            width: 30px; /* Base size of the cursor ball */
+            height: 30px;
+            border-radius: 50%;
+            /* Radial gradient for fading effect */
+            background: radial-gradient(circle, rgba(245, 245, 220, 0.8) 0%, rgba(245, 245, 220, 0) 70%);
+            transform: translate(-50%, -50%); /* Center the cursor div */
+            pointer-events: none; /* Ensure it doesn't block clicks */
+            z-index: 9999; /* Always on top */
+            transition: width 0.3s ease, height 0.3s ease; /* Smooth transition for size changes */
+        }
+
+        /* Animation for the cursor when over the install button */
+        @keyframes scalePulse {
+            0% { transform: translate(-50%, -50%) scale(1); } /* Normal size */
+            50% { transform: translate(-50%, -50%) scale(0.7); } /* 30% smaller */
+            100% { transform: translate(-50%, -50%) scale(1.3); } /* 30% bigger */
+        }
+
+        /* Class to apply animation when hovering over the install button */
+        .cursor-scale-pulse {
+            animation: scalePulse 1s infinite alternate; /* Apply the animation */
+        }
+
+        /* Styles for the Warning Pop-up */
+        #warning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9); /* Dark overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000; /* Ensure it's on top of everything */
+        }
+
+        #warning-box {
+            background-color: #1c1717; /* Match app container background */
+            color: #f8fafc; /* Match app text color */
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        #warning-box h2 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        #warning-box p {
+            font-size: 1rem; /* Made text smaller */
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        /* Style for the Enter instruction text */
+        #enter-instruction {
+            font-size: 0.9rem; /* Smaller font size */
+            color: #a0aec0; /* Lighter gray color */
+            margin-top: 10px; /* Space above */
+            margin-bottom: 20px; /* Space below */
+        }
+
+
+        #close-warning-button {
+            background-color: #4a5568; /* Match info button color */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        #close-warning-button:hover {
+             background-color: #2d3748; /* Darker on hover */
+        }
+
+        /* Style for the footer text */
+        #footer-text {
+            margin-top: 40px; /* Add space above the footer */
+            font-size: 0.9rem; /* Smaller font size for footer */
+            color: #a0aec0; /* Lighter gray color for footer */
+            text-align: center; /* Center the footer text */
+            width: 100%; /* Ensure footer takes full width */
+        }
+
+        #footer-text a {
+            color: #a0aec0; /* Match footer text color for the link */
+            text-decoration: none; /* Remove underline from email link */
+        }
+
+         #footer-text a:hover {
+            text-decoration: underline; /* Add underline on hover for the email link */
+         }
+    </style>
+</head>
+<body>
+
+    <div id="stars"></div>
+    <div id="moon">🌙</div>
+
+    <div id="app-container">
+        <h1 class="text-4xl font-bold mb-4">سار بليل وحيدا</h1>
+        <p class="text-xl mb-8">تطبيق أنشودة سار بليل وحيدا</p>
+        <audio id="song" src="https://dn720306.ca.archive.org/0/items/ikIPcTSatf9C.128/ikIPcTSatf9C.128.mp3" controls></audio>
+
+        <div id="lyrics">
+            <p>سار بالليل وحيداً قاصداً أرض الجهاد</p>
+            <p>هارباً يرجو نجاة ورضى رب العباد</p>
+            <br>
+            <p>صاحت الدنيا عليه كيف تنسى ذكرياتي</p>
+            <p>قال لا أبغيك داراً في السما كل مراد</p>
+            <br>
+            <p>جالت الافكار فيه كيف تنسى والديك</p>
+            <p>كيف تتركهم حيارى برهم فرض عليك</p>
+            <br>
+            <p>قال لله استجبت يوم أن نادى المنادي</p>
+            <p>شاكياً حالي إليه وهو رحمن العباد</p>
+            <br>
+            <p>وتراءت أصبـــع اللوم تــــقول له أعلم</p>
+            <p>أن للازواج حق ولابناء ستــــــندم</p>
+            <br>
+            <p>قال ماكنت لارضى عيش ذل بين اهلي</p>
+            <p>بلغوا عني عزائي نصري للدين مقدم</</p>
+            <br>
+            <p>والتقى الصفان زحفاً ورأى ظل المنون</p>
+            <p>فمشى مشية كبر مرهباً ذات القرون</p>
+            <br>
+            <p>صالا في الحرب وجالا مسعر الحرب الزبون</p>
+            <p>اشبع الاعداء قتلاً فاتحاً أعتى الحصون</p>
+            <br>
+            <p>ورأى الحور مناماً مشرقات الوجه تبسم</p>
+            <p>سر بالبشرى وهش كم للقيا الحور أقدم</</p>
+            <br>
+            <p>سقط الليث شهيداً بعد أن حز وهشم</
+            <p>كل من لاقى من الكفار كالموت المحتم</p>
+        </div>
+
+    </div>
+
+    <div id="top-left-buttons">
+        <button id="open-section-button" class="top-left-button">ℹ️</button>
+        </div>
+
+    <div id="new-section" class="overlay-section">
+        <div id="new-section-content" class="overlay-content">
+            <button class="close-button">إغلاق</button>
+            <h2 class="text-3xl font-bold mb-4">ملخص الأنشودة</h2>
+            <p>تتحدث الأنشودة عن شخص يسير وحيداً في الليل، متجهاً نحو أرض الجهاد، هارباً من الدنيا وملذاتها، راجياً النجاة ورضا الله. يواجه لوم الدنيا وتساؤلات حول تركه لوالديه وأسرته، لكنه يؤكد أن استجابته لنداء الله مقدمة على كل شيء، وأن نصرة الدين هي هدفه الأسمى.</p>
+            <p>تصف الأنشودة بعد ذلك مشاهد من المعركة، حيث يقاتل هذا الشخص بشجاعة وقوة، محققاً انتصارات على الأعداء. يرى في منامه الحور العين، مما يزيده شوقاً للقائهن.</p>
+            <p>في النهاية، يسقط هذا "الليث" شهيداً بعد قتال عنيف، مؤكداً أن الموت في سبيل الله هو المصير المحتم لكل من يواجه الكفار.</p>
+            <a href="https://dn720306.ca.archive.org/0/items/ikIPcTSatf9C.128/ikIPcTSatf9C.128.mp3" id="install-button" download>تنزيل</a>
+        </div>
+    </div>
+
+    <div id="custom-cursor"></div>
+
+    <div id="warning-overlay">
+        <div id="warning-box">
+            <h2>تنبيه هام | Important Warning</h2>
+            <p>
+                هذا التطبيق لأغراض تعليمية وبحثية فقط، ويهدف إلى الحفاظ على هذه المادة الإعلامية من الضياع في التاريخ.
+                <br><br>
+                This application is for educational and research purposes only, and aims to preserve this media material from being lost to history.
+            </p>
+            <p id="enter-instruction">
+                (لإغلاق هذا التنبيه على الكمبيوتر، اضغط على Enter)
+                <br>
+                (To close this warning on PC, press Enter)
+            </p>
+            <button id="close-warning-button">فهمت | Understood</button>
+        </div>
+    </div>
+
+    <div id="footer-text">
+        Made by Zayed Al Baloch | Email: <a href="mailto:zayedalameeri@gmail.com">zayedalameeri@gmail.com</a>
+    </div>
+
+
+    <script>
+        const appContainer = document.getElementById('app-container');
+        const starsContainer = document.getElementById('stars');
+        const lyricsDiv = document.getElementById('lyrics');
+        const song = document.getElementById('song'); // Get the audio element
+
+        const openSectionButton = document.getElementById('open-section-button');
+        const newSection = document.getElementById('new-section');
+        // const closeSectionButton = document.getElementById('close-section-button'); // Removed as using class now
+
+        // Removed suggestions button and section constants
+        // const openSuggestionsButton = document.getElementById('open-suggestions-button');
+        // const suggestionsSection = document.getElementById('suggestions-section');
+        // const submitSuggestionButton = document.getElementById('submit-suggestion');
+        // const suggestionTextarea = document.getElementById('suggestion-text');
+
+
+        const customCursor = document.getElementById('custom-cursor');
+        const installButton = document.getElementById('install-button'); // Get the install button
+
+        const warningOverlay = document.getElementById('warning-overlay');
+        const closeWarningButton = document.getElementById('close-warning-button');
+
+        // Get all close buttons
+        const closeButtons = document.querySelectorAll('.close-button');
+
+
+        // --- Star Generation ---
+        function createStar() {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            star.textContent = '✨'; // Star emoji
+            star.style.top = Math.random() * 100 + '%';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.animationDuration = (Math.random() * 2 + 1) + 's'; // Randomize twinkle speed
+            starsContainer.appendChild(star);
+        }
+
+        // Generate a few stars on load
+        for (let i = 0; i < 70; i++) { // Increased number of stars
+            createStar();
+        }
+
+        // --- Button Interaction ---
+        openSectionButton.addEventListener('click', () => {
+            newSection.style.display = 'flex'; // Show the info section
+            // Removed hiding suggestions section
+            // suggestionsSection.style.display = 'none';
+        });
+
+        // Removed suggestions button listener
+        // openSuggestionsButton.addEventListener('click', () => {
+        //     suggestionsSection.style.display = 'flex';
+        //     newSection.style.display = 'none';
+        // });
+
+        // Add event listeners to all close buttons
+        closeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Find the parent section and hide it
+                button.closest('.overlay-section').style.display = 'none';
+            });
+        });
+
+        // --- Submit Suggestion Logic ---
+        // Removed submit suggestion button listener
+        // submitSuggestionButton.addEventListener('click', () => {
+        //     const suggestion = suggestionTextarea.value;
+        //     if (suggestion.trim() !== '') {
+        //         const mailtoLink = `mailto:zayedalameeri@gmail.com?subject=Suggestion for Anashid App&body=${encodeURIComponent(suggestion)}`;
+        //         window.location.href = mailtoLink;
+        //         suggestionTextarea.value = '';
+        //         alert('Your email client should open with the suggestion. Please send the email.');
+        //     } else {
+        //         alert('Please write a suggestion before sending.');
+        //     }
+        // });
+
+
+        // --- Custom Cursor Logic ---
+        // Add mousemove listener to the entire body
+        document.body.addEventListener('mousemove', (e) => {
+            // Update custom cursor position
+            customCursor.style.left = e.clientX + 'px';
+            customCursor.style.top = e.clientY + 'px';
+        });
+
+        // Add mouseover and mouseout listeners for the install button
+        installButton.addEventListener('mouseover', () => {
+            customCursor.classList.add('cursor-scale-pulse'); // Add class to start animation
+        });
+
+        installButton.addEventListener('mouseout', () => {
+            customCursor.classList.remove('cursor-scale-pulse'); // Remove class to stop animation
+        });
+
+        // --- Warning Pop-up Logic ---
+        // Show warning on page load (handled by default display: flex in CSS)
+        // Hide warning when close button is clicked
+        closeWarningButton.addEventListener('click', () => {
+            warningOverlay.style.display = 'none';
+        });
+
+        // Hide warning when Enter key is pressed
+        document.addEventListener('keydown', (e) => {
+            // Check if the warning is currently displayed and the pressed key is Enter
+            if (warningOverlay.style.display !== 'none' && (e.key === 'Enter' || e.keyCode === 13)) {
+                warningOverlay.style.display = 'none';
+            }
+        });
+
+
+        // --- Responsive Star Generation (Optional) ---
+        window.addEventListener('resize', () => {
+            starsContainer.innerHTML = '';
+            for (let i = 0; i < 70; i++) { // Regenerate same number, or calculate based on size
+                createStar();
+            }
+        });
+
+        // Optional: Pause/Play song when window loses/gains focus
+        // window.addEventListener('blur', () => {
+        //     if (!song.paused) {
+        //         song.pause();
+        //     }
+        // });
+        // window.addEventListener('focus', () => {
+        //     if (song.paused) { // Only resume if it is currently paused
+        //         song.play();
+        //     }
+        // });
+
+    </script>
+
+</body>
+</html>
